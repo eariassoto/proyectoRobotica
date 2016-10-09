@@ -5,34 +5,39 @@ import threading
 import time
 from random import randint
 import numpy as np
+import sys
 
-temp = 0;
-
-from flask import Flask, url_for
+from flask import Flask, url_for, jsonify
 from flask.ext.cors import CORS, cross_origin
 app = Flask(__name__)
 
+temp = 0
+contador = 0
+
 def hilo_temp():
-    global temp
+    global temp, contador
     while True:
-        mu, sigma = 98.2249, 0.733 # media y desvstd
-        temp = np.random.normal(mu, sigma)
-        temp = (temp - 32) * 5.0/9.0 # fahren a celsius
-        time.sleep(5)
+        # modifica la temperatura cada 5 segundo
+        if temp % 5 == 0:
+            mu, sigma = 98.2249, 0.733 # media y desvstd
+            temp = np.random.normal(mu, sigma)
+            temp = (temp - 32) * 5.0/9.0 # fahren a celsius
+            temp = round(temp, 2)
+        contador += 1
+        time.sleep(1)
 
 
 @app.route('/')
 @cross_origin() 
 def api_root():
-    return 'API Máquina Soporte Vital. v0.1'
-
-@app.route('/temperatura')
-@cross_origin()
-def api_articles():
     global temp
-    return 'Temperatura ' + str(temp)
+    res = {'temperatura': temp}
+    return jsonify(**res)
 
 if __name__ == '__main__':
-    t = threading.Thread(target=hilo_temp)
-    t.start()
-    app.run(port=3000)
+    try:
+        t = threading.Thread(target=hilo_temp)
+        t.start()
+        app.run(port=3000)
+    except KeyboardInterrupt:
+        sys.exit()
