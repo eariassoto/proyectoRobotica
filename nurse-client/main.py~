@@ -3,26 +3,24 @@
 # This is a tiny example that shows how to show live images from Nao using PyQt.
 # You must have python-qt4 installed on your system.
 #
-
+from time import sleep
 import logging, sys
-
 from PyQt4.QtGui import(
     QWidget, QImage, QApplication, QPainter, QDesktopWidget,
     QPushButton, QTextEdit
 )
-
 from naoqi import ALProxy
 
 # To get the constants relative to the video.
 import vision_definitions
 
 
-class ImageWidget(QWidget):
+class MainWindow(QWidget):
     """
     Tiny widget to display camera images from Naoqi.
     """
     def __init__(self, IP, PORT, CameraID, parent=None):
-        super(ImageWidget, self).__init__()
+        super(MainWindow, self).__init__()
 
         self._cameraID = CameraID
         self._image = QImage('cam.png')
@@ -150,6 +148,7 @@ class ImageWidget(QWidget):
         """
         self._updateImage()
         self.update()
+        sleep(1)
 
 
     def buttonClicked(self):
@@ -186,6 +185,6 @@ if __name__ == '__main__':
 
 
     app = QApplication(sys.argv)
-    myWidget = ImageWidget(IP, PORT, CameraID)
+    myWidget = MainWindow(IP, PORT, CameraID)
     sys.exit(app.exec_())
 
