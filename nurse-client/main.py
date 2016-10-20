@@ -20,6 +20,8 @@ from naoqi import ALProxy
 # To get the constants relative to the video.
 import vision_definitions
 
+image = QImage("2.png")
+
 """
 # Thread class template
 
@@ -38,27 +40,32 @@ class YourThreadName(QThread):
 
 class NaoCameraUpdater(QThread):
 
-    def __init__(self, _videoProxy, _imgClient, _image):
+    def __init__(self, _videoProxy, _imgClient, _windows):
         QThread.__init__(self)
         self._videoProxy = _videoProxy
         self._imgClient = _imgClient
-        self._image = _image
+        self._windows = _windows
 
     def __del__(self):
         self.wait()
         
     def _updateImage(self):
+        global image
         if self._imgClient != None:
             alImage = self._videoProxy.getImageRemote(self._imgClient)
-            self._image = QImage(alImage[6],           # Pixel array.
+            image = QImage(alImage[6],           # Pixel array.
                                  alImage[0],           # Width.
                                  alImage[1],           # Height.
                                  QImage.Format_RGB888)
-								 
-    def run(self, _updateImage, _imgClient):
-        while(True):
+	    del alImage
+
+		 
+    def run(self):
+        global image
+        while True:
             self._updateImage()
-            sleep(1)
+            self._windows.repaint()
+            sleep(0.5)
 
 class MainWindow(QWidget):
     """
@@ -68,7 +75,6 @@ class MainWindow(QWidget):
         super(MainWindow, self).__init__()
 
         self._cameraID = CameraID
-        self._image = QImage('cam.png')
 
         self._initUI()
 
@@ -86,7 +92,7 @@ class MainWindow(QWidget):
         self._initRobot()
 
         self.myThread = NaoCameraUpdater(self._videoProxy, 
-            self._imgClient, self._image)
+            self._imgClient, self)
         self.myThread.start()
 
     def _initUI(self):
@@ -168,9 +174,9 @@ class MainWindow(QWidget):
         """
         Draw the QImage on screen.
         """
+        global image
         painter = QPainter(self)
-        painter.drawImage(0, 0, self._image, 0, 0, 320, 240)
-        
+        painter.drawImage(0, 0, image, 0, 0, 320, 240)
 
     def buttonClicked(self):
         sender = self.sender
