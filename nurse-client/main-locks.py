@@ -206,7 +206,7 @@ class MainWindow(QWidget):
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-    IP = "10.1.131.141"  # Replace here with your NaoQi's IP address.
+    IP = "10.1.133.239"  # Replace here with your NaoQi's IP address.
     PORT = 9559
     CameraID = 0
 

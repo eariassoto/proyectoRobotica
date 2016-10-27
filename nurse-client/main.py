@@ -16,6 +16,7 @@ from PyQt4.QtGui import(
 )
 from PyQt4.QtCore import QThread
 from naoqi import ALProxy
+import pdb
 
 # To get the constants relative to the video.
 import vision_definitions
@@ -52,20 +53,20 @@ class NaoCameraUpdater(QThread):
     def _updateImage(self):
         global image
         if self._imgClient != None:
-            alImage = self._videoProxy.getImageRemote(self._imgClient)
-            image = QImage(alImage[6],           # Pixel array.
-                                 alImage[0],           # Width.
-                                 alImage[1],           # Height.
-                                 QImage.Format_RGB888)
-	    del alImage
-
+            #alImage = self._videoProxy.getImageRemote(self._imgClient)
+            #image = QImage(alImage[6],           # Pixel array.
+            #                     alImage[0],           # Width.
+            #                     alImage[1],           # Height.
+            #                     QImage.Format_RGB888)
+	    #del alImage
+            pass
 		 
     def run(self):
         global image
         while True:
             self._updateImage()
             self._windows.repaint()
-            sleep(0.5)
+            sleep(0.1)
 
 class MainWindow(QWidget):
     """
@@ -78,15 +79,24 @@ class MainWindow(QWidget):
 
         self._initUI()
 
-        # Proxy objects
-        self._videoProxy = None
-        self._postureProxy = None
-        self._ttsProxy = None
+        try:
+            self._videoProxy = ALProxy("ALVideoDevice", IP, PORT)
+        except:
+            self._videoProxy = None
+            logging.warning("No se pudo conectar al modulo ALVideoDevice")
 
-        # Module objects
-        self._imgClient = None
+        try:
+            self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
+        except:
+            self._postureProxy = None
+            logging.warning("No se pudo conectar al modulo ALRobotPosture")
 
-        self._initializeModules(IP, PORT)
+        try:
+            self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
+        except:
+            self._postureProxy = None
+            logging.warning("No se pudo conectar al modulo ALTextToSpeech")
+
         self._registerClients()
 
         self._initRobot()
@@ -126,26 +136,6 @@ class MainWindow(QWidget):
             self._postureProxy.goToPosture(pos, 1.0)
 
 
-    def _initializeModules(self, IP, PORT):        
-        try:
-            self._videoProxy = ALProxy("ALVideoDevice", IP, PORT)
-        except:
-            self._videoProxy = None
-            logging.warning("No se pudo conectar al modulo ALVideoDevice")
-
-        try:
-            self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
-        except:
-            self._postureProxy = None
-            logging.warning("No se pudo conectar al modulo ALRobotPosture")
-
-        try:
-            self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
-        except:
-            self._postureProxy = None
-            logging.warning("No se pudo conectar al modulo ALTextToSpeech")
-
-
     def _registerClients(self):
         """
         Register our video module to the robot.
@@ -174,9 +164,10 @@ class MainWindow(QWidget):
         """
         Draw the QImage on screen.
         """
-        global image
-        painter = QPainter(self)
-        painter.drawImage(0, 0, image, 0, 0, 320, 240)
+        #global image
+        #painter = QPainter(self)
+        #painter.drawImage(0, 0, image, 0, 0, 320, 240)
+        pass
 
     def buttonClicked(self):
         sender = self.sender
@@ -197,7 +188,7 @@ class MainWindow(QWidget):
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-    IP = "10.1.131.141"  # Replace here with your NaoQi's IP address.
+    IP = "10.1.133.239"  # Replace here with your NaoQi's IP address.
     PORT = 9559
     CameraID = 0
 
