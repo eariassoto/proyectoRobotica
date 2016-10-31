@@ -21,75 +21,14 @@ import pdb
 # To get the constants relative to the video.
 import vision_definitions
 
-image = QImage("2.png")
-
-"""
-# Thread class template
-
-class YourThreadName(QThread):
-
-    def __init__(self):
-        QThread.__init__(self)
-
-    def __del__(self):
-        self.wait()
-
-    def run(self):
-        # your logic here
-
-"""
-
-class NaoCameraUpdater(QThread):
-
-    def __init__(self, _videoProxy, _imgClient, _windows):
-        QThread.__init__(self)
-        self._videoProxy = _videoProxy
-        self._imgClient = _imgClient
-        self._windows = _windows
-
-    def __del__(self):
-        self.wait()
-        
-    def _updateImage(self):
-        global image
-        if self._imgClient != None:
-            #alImage = self._videoProxy.getImageRemote(self._imgClient)
-            #image = QImage(alImage[6],           # Pixel array.
-            #                     alImage[0],           # Width.
-            #                     alImage[1],           # Height.
-            #                     QImage.Format_RGB888)
-	    #del alImage
-            pass
-		 
-    def run(self):
-        global image
-        while True:
-            self._updateImage()
-            self._windows.repaint()
-            sleep(0.1)
-
 class MainWindow(QWidget):
     """
     Tiny widget to display camera images from Naoqi.
     """
-    def __init__(self, IP, PORT, CameraID, parent=None):
+    def __init__(self, IP, PORT, parent=None):
         super(MainWindow, self).__init__()
 
-        self._cameraID = CameraID
-
         self._initUI()
-
-        try:
-            self._videoProxy = ALProxy("ALVideoDevice", IP, PORT)
-        except:
-            self._videoProxy = None
-            logging.warning("No se pudo conectar al modulo ALVideoDevice")
-
-        try:
-            self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
-        except:
-            self._postureProxy = None
-            logging.warning("No se pudo conectar al modulo ALRobotPosture")
 
         try:
             self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
@@ -97,13 +36,8 @@ class MainWindow(QWidget):
             self._postureProxy = None
             logging.warning("No se pudo conectar al modulo ALTextToSpeech")
 
-        self._registerClients()
+        #self._initRobot()
 
-        self._initRobot()
-
-        self.myThread = NaoCameraUpdater(self._videoProxy, 
-            self._imgClient, self)
-        self.myThread.start()
 
     def _initUI(self):
 
@@ -112,7 +46,11 @@ class MainWindow(QWidget):
 
         btn1 = QPushButton("Button 1", self)
         btn1.move(330, 310)
-        btn1.clicked.connect(self.buttonClicked)
+        btn1.clicked.connect(self.button1Clicked)
+
+        btn2 = QPushButton("Derecha", self)
+        btn2.move(0, 0)
+        btn2.clicked.connect(self.button2Clicked)
 
         self.edit = QTextEdit(self)
         self.edit.setPlainText("text")
@@ -136,40 +74,7 @@ class MainWindow(QWidget):
             self._postureProxy.goToPosture(pos, 1.0)
 
 
-    def _registerClients(self):
-        """
-        Register our video module to the robot.
-        """
-        if self._videoProxy != None:
-            resolution = vision_definitions.kQVGA  # 320 * 240
-            colorSpace = vision_definitions.kRGBColorSpace
-            self._imgClient = self._videoProxy.subscribe("_client", resolution, colorSpace, 5)
-            # Select camera.
-            self._videoProxy.setParam(vision_definitions.kCameraSelectID,
-                                      self._cameraID)
-        else:
-            self._imgClient = None
-            logging.warning("No se pudo registrar el cliente de la camara")
-
-
-    def _unregisterClients(self):
-        """
-        Unregister our naoqi video module.
-        """
-        if self._imgClient != None:
-            self._videoProxy.unsubscribe(self._imgClient)
-
-
-    def paintEvent(self, event):
-        """
-        Draw the QImage on screen.
-        """
-        #global image
-        #painter = QPainter(self)
-        #painter.drawImage(0, 0, image, 0, 0, 320, 240)
-        pass
-
-    def buttonClicked(self):
+    def button1Clicked(self):
         sender = self.sender
         s = str(self.edit.toPlainText())
 
@@ -177,11 +82,15 @@ class MainWindow(QWidget):
             self._ttsProxy.say(s)
 
 
+    def button2Clicked(self):
+        sender = self.sender
+
+
     def __del__(self):
         """
         When the widget is deleted, we unregister our naoqi video module.
         """
-        self._unregisterClients()
+        pass
 
 
 
@@ -190,17 +99,12 @@ if __name__ == '__main__':
 
     IP = "10.1.133.239"  # Replace here with your NaoQi's IP address.
     PORT = 9559
-    CameraID = 0
 
     # Read IP address from first argument if any.
     if len(sys.argv) > 1:
         IP = sys.argv[1]
 
-    # Read CameraID from second argument if any.
-    if len(sys.argv) > 2:
-        CameraID = int(sys.argv[2])
-
 
     app = QApplication(sys.argv)
-    myWidget = MainWindow(IP, PORT, CameraID)
+    myWidget = MainWindow(IP, PORT)
     sys.exit(app.exec_())
