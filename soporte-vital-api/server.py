@@ -18,7 +18,7 @@ def hilo_temp():
     global temp, contador
     while True:
         # modifica la temperatura cada 5 segundo
-        if temp % 5 == 0:
+        if contador % 5 == 0:
             mu, sigma = 98.2249, 0.733 # media y desvstd
             temp = np.random.normal(mu, sigma)
             temp = (temp - 32) * 5.0/9.0 # fahren a celsius
