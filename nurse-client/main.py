@@ -172,7 +172,7 @@ class MainWindow(QWidget):
 		if self._postureProxy != None:
 			pos = "Sit"
 			logging.info("Postura seleccionada: " + pos)
-			self._postureProxy.goToPosture(pos, 1.0)
+			#self._postureProxy.goToPosture(pos, 1.0)
 
 
 	def button1Clicked(self):
