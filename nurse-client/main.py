@@ -56,18 +56,16 @@ class Alert_Manager(Borg):
 			self.alerts.append((id, s_timespamp, msg))
 		except:
 			self.alerts = [(id, s_timespamp, msg)]
-		
-		# todo revisar si se agrego el mensaje
-		if True:
-			s = ""
-			for a in self.alerts:
-				# dejo el s[0] para debugging
-				s += str(a[1]) + " - " + str(a[2]) + "\n"
-			self.txtArea.setPlainText( s )
-			tts = gTTS(text=msg, lang='es')
-			tts.save("msg.mp3")
-			p = MediaPlayer("msg.mp3")
-			p.play()
+
+		s = ""
+		for a in self.alerts:
+			# dejo el s[0] para debugging
+			s += str(a[1]) + " - " + str(a[2]) + "\n"
+		self.txtArea.setPlainText( s )
+		tts = gTTS(text=msg, lang='es')
+		tts.save("msg.mp3")
+		p = MediaPlayer("msg.mp3")
+		p.play()
 			
 		return id
 	
