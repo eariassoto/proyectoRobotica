@@ -20,6 +20,9 @@ import pdb
 from urllib2 import urlopen
 from threading import Thread, BoundedSemaphore
 from json import loads
+from datetime import datetime
+from gtts import gTTS
+from vlc import MediaPlayer
 
 # To get the constants relative to the video.
 import vision_definitions
@@ -48,15 +51,24 @@ class Alert_Manager(Borg):
 	def insert_alert(self, id, msg):
 		# el try catch es porque self.alerts no existe en el 
 		# estado inicial
+		s_timespamp = datetime.now().strftime('%d-%m-%Y %I:%M %p')
 		try:
-			self.alerts.append((id, msg))
+			self.alerts.append((id, s_timespamp, msg))
 		except:
-			self.alerts = [(id, msg)]
-		# todo: si se agrega el elemento actualizar el txtarea
-		# le caigo encima al texto por probar
-		# self.textArea tiene los metodos append, clear y este otro
-		# También dejo la doc http://pyqt.sourceforge.net/Docs/PyQt4/qtextedit.html
-		self.txtArea.setPlainText( msg )
+			self.alerts = [(id, s_timespamp, msg)]
+		
+		# todo revisar si se agrego el mensaje
+		if True:
+			s = ""
+			for a in self.alerts:
+				# dejo el s[0] para debugging
+				s += str(a[1]) + " - " + str(a[2]) + "\n"
+			self.txtArea.setPlainText( s )
+			tts = gTTS(text=msg, lang='es')
+			tts.save("msg.mp3")
+			p = MediaPlayer("msg.mp3")
+			p.play()
+			
 		return id
 	
 	# todo: implementar esto y que actualize el estado de las alertass
@@ -138,7 +150,7 @@ class MainWindow(QWidget):
 		btn2.clicked.connect(self.button2Clicked)
 
 		self.edit = QTextEdit(self)
-		self.edit.setPlainText("text")
+		self.edit.setPlainText("Hola Mundo")
 		self.edit.setMinimumSize(200, 300)
 		self.edit.move(330, 0)
 		
