@@ -15,7 +15,7 @@ from PyQt4.QtGui import(
 	QTextEdit
 )
 from PyQt4.QtCore import QThread
-from naoqi import ALProxy
+from naoqi import ALProxy,ALModule
 import pdb
 from urllib2 import urlopen
 from threading import Thread, BoundedSemaphore
@@ -26,6 +26,23 @@ from vlc import MediaPlayer
 
 # To get the constants relative to the video.
 import vision_definitions
+
+# Handler class
+class QRCodeHandler(ALModule):
+	def QRCallback(self, key, value, msg):
+		print("encontre un codigazo")
+		"""global d
+		if value != []:
+			mensaje = value[0][0]
+			res = d[mensaje]
+			print "Received \"" + str(key) + "\" event with data: " + str(mensaje)
+			memory.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
+			awareness.startAwareness()
+			tts.say(res)
+			memory.subscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule", "myCallback")
+			#awareness.stopAwareness()
+			motion.setAngles("HeadYaw", 0, 0.25)
+			motion.setAngles("HeadPitch", 0, 0.25)"""
 
 # Este es un patrón de diseño que es parecido al Singleton.
 # En este patrón se hacen múltiples instancias de la clase pero
@@ -127,11 +144,26 @@ class MainWindow(QWidget):
 		
 		try:
 			self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
+			self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
+			self._barcodeProxy = ALProxy("ALBarcodeReader", IP, PORT)
+			self._memoryProxy = ALProxy("ALMemory", IP, PORT)
+			self._awarenessProxy = ALProxy('ALBasicAwareness', IP, PORT)
+			self._memoryProxy = ALProxy("ALMemory", IP, PORT)
+
+			self._initRobot()
+			self.QRHandler = QRCodeHandler("QRCodeHandler")
+			self._memoryProxy.subscribeToEvent("BarcodeReader/BarcodeDetected", "QRCodeHandler", "QRCallback")
+
 		except:
 			self._postureProxy = None
-			logging.warning("No se pudo conectar al modulo ALTextToSpeech")
+			self._ttsProxy = None
+			self._barcodeProxy = None
+			self._memoryProxy = None
+			self._awarenessProxy = None
+			self._memoryProxy = None
+			logging.warning("No se pudo conectar al robot")
 
-		#self._initRobot()
+		
 
 
 	def _initUI(self):
@@ -172,7 +204,10 @@ class MainWindow(QWidget):
 		if self._postureProxy != None:
 			pos = "Sit"
 			logging.info("Postura seleccionada: " + pos)
-			#self._postureProxy.goToPosture(pos, 1.0)
+			self._postureProxy.goToPosture(pos, 1.0)
+		if self._awarenessProxy != None:
+			self._awarenessProxy.stopAwareness()
+			# ponerla tiesa
 
 
 	def button1Clicked(self):
@@ -196,6 +231,8 @@ class MainWindow(QWidget):
 		
 	def closeEvent(self, event):
 		self.sema.release()
+		if self._memoryProxy:
+			self._memoryProxy.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
 
 
 
