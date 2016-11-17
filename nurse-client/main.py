@@ -15,7 +15,7 @@ from PyQt4.QtGui import(
 	QTextEdit
 )
 from PyQt4.QtCore import QThread
-from naoqi import ALProxy,ALModule
+from naoqi import ALProxy,ALModule,ALBroker
 import pdb
 from urllib2 import urlopen
 from threading import Thread, BoundedSemaphore
@@ -109,27 +109,9 @@ class Revisa_Signos(Thread):
 
 
 # Handler class
-class QRCodeHandler(ALModule):
-
-	def __init__(self):
-		self.alert = Alert_Manager()
-
-
-	def QRCallback(self, key, value, msg):
-		self.alert.insert_alert("encontre un código")
-		"""global d
-		if value != []:
-			mensaje = value[0][0]
-			res = d[mensaje]
-			print "Received \"" + str(key) + "\" event with data: " + str(mensaje)
-			memory.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
-			awareness.startAwareness()
-			tts.say(res)
-			memory.subscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule", "myCallback")
-			#awareness.stopAwareness()
-			motion.setAngles("HeadYaw", 0, 0.25)
-			motion.setAngles("HeadPitch", 0, 0.25)"""
-
+class myEventHandler(ALModule):
+  def myCallback(self, key, value, msg):
+    print "Received \"" + str(key) + "\" event with data: " + str(value)
 			
 class MainWindow(QWidget):
 	"""
@@ -152,20 +134,16 @@ class MainWindow(QWidget):
 		self.cabezaX = 0
 		self.cabezaY = 0
 		
-		try:
-			self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
-			self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
-			self._barcodeProxy = ALProxy("ALBarcodeReader", IP, PORT)
-			self._memoryProxy = ALProxy("ALMemory", IP, PORT)
-			self._awarenessProxy = ALProxy('ALBasicAwareness', IP, PORT)
-			self._memoryProxy = ALProxy("ALMemory", IP, PORT)
-			self._motionProxy = ALProxy("ALMotion", IP, PORT)
+		#try:
+		self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
+		self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
+		self._barcodeProxy = ALProxy("ALBarcodeReader", IP, PORT)
+		self._awarenessProxy = ALProxy('ALBasicAwareness', IP, PORT)
+		self._motionProxy = ALProxy("ALMotion", IP, PORT)
 
-			self._initRobot()
-			self.QRHandler = QRCodeHandler("QRCodeHandler")
-			self._memoryProxy.subscribeToEvent("BarcodeReader/BarcodeDetected", "QRCodeHandler", "QRCallback")
-
-		except:
+		self._initRobot()
+		
+		"""except:
 			self._postureProxy = None
 			self._ttsProxy = None
 			self._barcodeProxy = None
@@ -173,7 +151,7 @@ class MainWindow(QWidget):
 			self._awarenessProxy = None
 			self._memoryProxy = None
 			self._memoryProxy = None
-			logging.warning("No se pudo conectar al robot")
+			logging.warning("No se pudo conectar al robot")"""
 
 
 	def _initUI(self):
@@ -188,6 +166,18 @@ class MainWindow(QWidget):
 		btnDer = QPushButton("Derecha", self)
 		btnDer.move(0, 0)
 		btnDer.clicked.connect(self.buttonDerClicked)
+
+		btnIzq = QPushButton("Izquierda", self)
+		btnIzq.move(100, 0)
+		btnIzq.clicked.connect(self.buttonIzqClicked)
+
+		btnArr = QPushButton("Arriba", self)
+		btnArr.move(0, 100)
+		btnArr.clicked.connect(self.buttonArrClicked)
+
+		btnAba = QPushButton("Abajo", self)
+		btnAba.move(100, 100)
+		btnAba.clicked.connect(self.buttonAbaClicked)
 
 		self.edit = QTextEdit(self)
 		self.edit.setPlainText("Hola Mundo")
@@ -237,18 +227,24 @@ class MainWindow(QWidget):
 
 
 	def buttonDerClicked(self):
-		moverCabeza(self.cabezaX, 0.01, -1, 1)
-		
-	
-	def moverCabeza(self, var, cambio, min, max):
-		var += cambio
-		if var < min:
-			var = min
-		elif var > max:
-			var = max
-		if self._motionProxy != None:
-			self._motionProxy.setAngles("HeadYaw", self.cabezaX, 0.6)
-			self._motionProxy.setAngles("HeadPitch", self.cabezaY, 0.6)
+		if self.cabezaX != -1:
+			self.cabezaX -= 0.1
+		self._motionProxy.setAngles("HeadYaw", self.cabezaX, 0.3)
+
+	def buttonIzqClicked(self):
+		if self.cabezaX != 1:
+			self.cabezaX += 0.1
+		self._motionProxy.setAngles("HeadYaw", self.cabezaX, 0.3)
+
+	def buttonArrClicked(self):
+		if self.cabezaY != -0.5:
+			self.cabezaY -= 0.1
+		self._motionProxy.setAngles("HeadPitch", self.cabezaY, 0.3)
+
+	def buttonAbaClicked(self):
+		if self.cabezaY != 0.5:
+			self.cabezaY += 0.1
+		self._motionProxy.setAngles("HeadPitch", self.cabezaY, 0.3)
 
 
 	def __del__(self):
@@ -256,16 +252,18 @@ class MainWindow(QWidget):
 		
 	def closeEvent(self, event):
 		self.sema.release()
-		if self._memoryProxy:
-			self._memoryProxy.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
-
 
 
 if __name__ == '__main__':
-	logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
 	IP = "10.1.133.239"  # Replace here with your NaoQi's IP address.
 	PORT = 9559
+
+	broker = ALBroker("pythonBroker","0.0.0.0", 0, IP, PORT)
+	handlerModule = myEventHandler("handlerModule")
+        memory = ALProxy("ALMemory", IP, PORT)
+
+	memory.subscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule", "myCallback")
+	logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 	# Read IP address from first argument if any.
 	if len(sys.argv) > 1:
@@ -273,4 +271,5 @@ if __name__ == '__main__':
 
 	app = QApplication(sys.argv)
 	myWidget = MainWindow(IP, PORT)
+	#memory.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
 	sys.exit(app.exec_())

@@ -8,18 +8,36 @@
   <meta name="description" content="The HTML5 Herald">
   <meta name="author" content="SitePoint">
 
-  <link rel="stylesheet" href="styles.css">
+  <style></style>
 
   <!--[if lt IE 9]>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
   <![endif]-->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="script.js"></script>
 </head>
 
 <body>
+ <button type="button" onclick="f('panic_var=temp')">Temperatura</button> 
+ <button type="button" onclick="f('panic_var=pulso')">Pulso</button> 
+ <button type="button" onclick="f('panic_var=presionSS')">Presion sistolica</button> 
+ <button type="button" onclick="f('panic_var=presionSD')">Presion diastolica</button> 
+ <button type="button" onclick="f('panic_var=respiracion')">Respiracion</button> 
+  <script>
+function f(params)
+{
+var http = new XMLHttpRequest();
+var url = "http://127.0.0.1:3000";
+http.open("POST", url, true);
 
+//Send the proper header information along with the request
+http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
-  <h1 id="temp"></h1>
-  </body>
+http.onreadystatechange = function() {//Call a function when the state changes.
+    if(http.readyState == 4 && http.status == 200) {
+        alert(http.responseText);
+    }
+}
+http.send(params);
+}
+  </script>
+</body>
 </html>

@@ -39,7 +39,7 @@ def get_normal_presionSS():
 	# presion  alto por arriba 120 malo   bajo arriba 80 malo  
 	muSS, sigmaSS = 114.75, 10.91 # media y desvstd
 	presionSS = np.random.normal(muSS, sigmaSS)
-	presionSS = round(presionSS, 2)
+	presionSS = int(presionSS)
 	return presionSS
 
 
@@ -51,7 +51,7 @@ def get_normal_presionSD():
 	# presion  alto por arriba 120 malo   bajo arriba 80 malo
 	muSD, sigmaSD = 71.70, 8.25 # media y desvstd
 	presionSD = np.random.normal(muSD, sigmaSD)
-	presionSD = round(presionSD, 2)
+	presionSD = int(presionSD)
 	return presionSD
 
 
@@ -63,7 +63,7 @@ def get_normal_respiracion():
 	# respiracion rango normal para un adulto entre 15 a 20 respiraciones por minuto
 	muResp, sigmaResp = 23.69, 2.24 # media y desvstd
 	respiracion = np.random.normal(muResp, sigmaResp)
-	respiracion = round(respiracion, 2) 
+	respiracion = int(respiracion) 
 	return respiracion
 
 
@@ -75,7 +75,7 @@ def get_normal_pulso():
 	# pulso rango normal para un adulto entre 60 a 100 latidos por minuto
 	muPuls, sigmaPuls = 83.29, 10.04 # media y desvstd
 	pulso = np.random.normal(muPuls, sigmaPuls)
-	pulso = round(pulso, 2)
+	pulso = int(pulso)
 	return pulso
 
 
@@ -155,6 +155,6 @@ if __name__ == '__main__':
 	try:
 		t = threading.Thread(target=hilo_var)
 		t.start()
-		app.run(port=3000)
+		app.run(host= '0.0.0.0', port=3000)
 	except KeyboardInterrupt:
 		sys.exit()
