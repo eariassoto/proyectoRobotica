@@ -11,85 +11,150 @@ from flask import Flask, url_for, jsonify, request
 from flask.ext.cors import CORS, cross_origin
 app = Flask(__name__)
 
-
-"""
-http://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S0187-75852006000300004
-Resultados: La edad de los pacientes estudiados fue 51 ± 16 años. La tuberculosis pulmonar (29.5%) y neumonía intersticial (14.8%) fueron los diagnósticos más frecuentes. La diferencia media ± desviación estándar de la diferencia (y la media observada ± desviación estándar) de los signos vitales adquiridos por los tres grupos de enfermeras fueron: frecuencia cardiaca, 0.148 ± 6.71 (83.29 ± 10.04); frecuencia respiratoria, 0.197 ± 1.53 (23.69 ± 2.24); temperatura, 0.048 ± 0.204 (36.19 ± 0.33); presión arterial sistémica sistólica, 1.35 ± 6.02 (114.75 ± 10.91) y la presión arterial sistémica diastólica, 0.123 ± 6.12 (71.70 ± 8.25). La magnitud del acuerdo para todos los signos vitales entre los grupos diferenciales de enfermeras (especialistas–generales, generales–auxiliares y especialistas–auxiliares) fueron entre 0.69 y 0.89.
-
-def hilo_temp():
-    global temp, contador, pulso, presionSS, presionSD respiracion
-    while True:
-        # modifica la temperatura cada 5 segundo
-        if contador % 5 == 0:
-            mu, sigma = 98.2249, 0.733 # media y desvstd
-            temp = np.random.normal(mu, sigma)
-            temp = (temp - 32) * 5.0/9.0 # fahren a celsius
-            temp = round(temp, 2)
-        # presion  alto por arriba 120 malo   bajo arriba 80 malo  
-        muSS, sigmaSS = 114.75, 10.91 # media y desvstd
-            presionSS = np.random.normal(muSS, sigmaSS)
-            presionSS = round(pulso)
-        muSD, sigmaSD = 71.70, 8.25 # media y desvstd
-            presionSD = np.random.normal(muSD, sigmaSD)
-            presionSD = round(pulso)
-        # respiracion rango normal para un adulto entre 15 a 20 respiraciones por minuto
-        muResp, sigmaResp = 23.69, 2.24 # media y desvstd
-            respiracion = np.random.normal(muResp, sigmaResp)
-            respiracion = round(respiracion) 
-        # pulso rango normal para un adulto entre 60 a 100 latidos por minuto
-        muPuls, sigmaPuls = 83.29, 10.04 # media y desvstd
-            pulso = np.random.normal(muPuls, sigmaPuls)
-            pulso = round(pulso)
-"""
+# variables del monitor
 temp = 0
-contador = 0
 panic_temp = False
+pulso = 0
+panic_pulso = False
+presionSS = 0
+panic_presionSS = False
+presionSD = 0
+panic_presionSD = False
+respiracion = 0
+panic_respiracion = False
+contador = 0
 
 
 def get_normal_temp():
-    mu, sigma = 98.2249, 0.733 # media y desvstd
-    temp = np.random.normal(mu, sigma)
-    temp = (temp - 32) * 5.0/9.0 # fahren a celsius
-    temp = round(temp, 2)
-    return temp
+	mu, sigma = 98.2249, 0.733 # media y desvstd
+	temp = np.random.normal(mu, sigma)
+	temp = (temp - 32) * 5.0/9.0 # fahren a celsius
+	temp = round(temp, 2)
+	return temp
 
 def get_panic_temp():
-    return 100
+	return 100
+
+def get_normal_presionSS():
+	# presion  alto por arriba 120 malo   bajo arriba 80 malo  
+	muSS, sigmaSS = 114.75, 10.91 # media y desvstd
+	presionSS = np.random.normal(muSS, sigmaSS)
+	presionSS = round(presionSS, 2)
+	return presionSS
+
+
+def get_panic_presionSS():
+	return 140
+
+
+def get_normal_presionSD():
+	# presion  alto por arriba 120 malo   bajo arriba 80 malo
+	muSD, sigmaSD = 71.70, 8.25 # media y desvstd
+	presionSD = np.random.normal(muSD, sigmaSD)
+	presionSD = round(presionSD, 2)
+	return presionSD
+
+
+def get_panic_presionSD():
+	return 100
+
+
+def get_normal_respiracion():
+	# respiracion rango normal para un adulto entre 15 a 20 respiraciones por minuto
+	muResp, sigmaResp = 23.69, 2.24 # media y desvstd
+	respiracion = np.random.normal(muResp, sigmaResp)
+	respiracion = round(respiracion, 2) 
+	return respiracion
+
+
+def get_panic_respiracion():
+	return 30
+
+
+def get_normal_pulso():
+	# pulso rango normal para un adulto entre 60 a 100 latidos por minuto
+	muPuls, sigmaPuls = 83.29, 10.04 # media y desvstd
+	pulso = np.random.normal(muPuls, sigmaPuls)
+	pulso = round(pulso, 2)
+	return pulso
+
+
+def get_panic_pulso():
+	return 120
+
 
 def hilo_var():
-    global temp, contador, panic_temp
-    while True:
-        # modifica la temperatura cada 5 segundo
-        if contador % 3 == 0:
-            if panic_temp:
-                temp = get_panic_temp()
-            else:
-                temp = get_normal_temp() 
-        contador += 1
-        time.sleep(1)
+	global contador, temp, panic_temp, pulso, panic_pulso, presionSS, panic_presionSS, presionSD, panic_presionSD, respiracion, panic_respiracion 
+	while True:
+		# modifica la temperatura cada 5 segundo
+		if contador % 2 == 0:
+			if panic_temp:
+				temp = get_panic_temp()
+			else:
+				temp = get_normal_temp()
+				
+			if panic_pulso:
+				pulso = get_panic_pulso()
+			else:
+				pulso = get_normal_pulso()
+				
+			if panic_presionSS:
+				presionSS = get_panic_presionSS()
+			else:
+				presionSS = get_normal_presionSS() 
+				
+			if panic_presionSD:
+				presionSD = get_panic_presionSD()
+			else:
+				presionSD = get_normal_presionSD()
+				
+			if panic_respiracion:
+				respiracion = get_panic_respiracion()
+			else:
+				respiracion = get_normal_respiracion() 
+		contador += 1
+		time.sleep(1)
 
 
 @app.route('/', methods = ['GET', 'POST'])
 @cross_origin() 
 def api_root():
-    if request.method == 'GET':
-        global temp, panic_temp
-        res = {'temperatura': temp}
-        return jsonify(**res)
-    elif request.method == 'POST':
-        res = "No se hizo nada"
-        panic_var = request.form['panic_var']
-        if panic_var == 'temp':
-            panic_temp = not panic_temp
-            res = "Status de variable temp: " + str(panic_temp) 
-        # todo otras variables
-        return res
+	global temp, panic_temp, pulso, panic_pulso, presionSS, panic_presionSS, presionSD, panic_presionSS, respiracion, panic_respiracion
+	if request.method == 'GET':		
+		res = {'temperatura': temp, 'pulso': pulso, 'presionSS': presionSS, 'presionSD': presionSD, 'respiracion': respiracion}
+		return jsonify(**res)
+		
+	elif request.method == 'POST':
+		res = "No se hizo nada"
+		panic_var = request.form['panic_var']
+		
+		if panic_var == 'temp':
+			panic_temp = not panic_temp
+			res = "Status de variable temp: " + str(panic_temp)
+			
+		elif panic_var == 'pulso':
+			panic_pulso = not panic_pulso
+			res = "Status de variable pulso: " + str(panic_pulso)
+			
+		elif panic_var == 'presionSS':
+			panic_presionSS = not panic_presionSS
+			res = "Status de variable presionSS: " + str(panic_presionSS)
+			
+		elif panic_var == 'presionSD':
+			panic_presionSD = not panic_presionSD
+			res = "Status de variable presionSD: " + str(panic_presionSD)
+			
+		elif panic_var == 'respiracion':
+			panic_respiracion = not panic_respiracion
+			res = "Status de variable respiracion: " + str(panic_respiracion)
+			
+		return res
 
 
 if __name__ == '__main__':
-    try:
-        t = threading.Thread(target=hilo_var)
-        t.start()
-        app.run(port=3000)
-    except KeyboardInterrupt:
-        sys.exit()
+	try:
+		t = threading.Thread(target=hilo_var)
+		t.start()
+		app.run(port=3000)
+	except KeyboardInterrupt:
+		sys.exit()

@@ -27,22 +27,6 @@ from vlc import MediaPlayer
 # To get the constants relative to the video.
 import vision_definitions
 
-# Handler class
-class QRCodeHandler(ALModule):
-	def QRCallback(self, key, value, msg):
-		print("encontre un codigazo")
-		"""global d
-		if value != []:
-			mensaje = value[0][0]
-			res = d[mensaje]
-			print "Received \"" + str(key) + "\" event with data: " + str(mensaje)
-			memory.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
-			awareness.startAwareness()
-			tts.say(res)
-			memory.subscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule", "myCallback")
-			#awareness.stopAwareness()
-			motion.setAngles("HeadYaw", 0, 0.25)
-			motion.setAngles("HeadPitch", 0, 0.25)"""
 
 # Este es un patrón de diseño que es parecido al Singleton.
 # En este patrón se hacen múltiples instancias de la clase pero
@@ -114,7 +98,7 @@ class Revisa_Signos(Thread):
 				request = loads(request)
 				temp = request['temperatura']
 				if temp >= self.fiebre:
-					print("El paciente tiene fiebre!")
+					self.alert.insert_alert("El paciente tiene fiebre!")
 					# todo, mandar la alerta a self.alert
 			except:
 				print("error al abrir la conexion, saliendo")
@@ -124,6 +108,29 @@ class Revisa_Signos(Thread):
 			self.sema.release()
 
 
+# Handler class
+class QRCodeHandler(ALModule):
+
+	def __init__(self):
+		self.alert = Alert_Manager()
+
+
+	def QRCallback(self, key, value, msg):
+		self.alert.insert_alert("encontre un código")
+		"""global d
+		if value != []:
+			mensaje = value[0][0]
+			res = d[mensaje]
+			print "Received \"" + str(key) + "\" event with data: " + str(mensaje)
+			memory.unsubscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule")
+			awareness.startAwareness()
+			tts.say(res)
+			memory.subscribeToEvent("BarcodeReader/BarcodeDetected", "handlerModule", "myCallback")
+			#awareness.stopAwareness()
+			motion.setAngles("HeadYaw", 0, 0.25)
+			motion.setAngles("HeadPitch", 0, 0.25)"""
+
+			
 class MainWindow(QWidget):
 	"""
 	Tiny widget to display camera images from Naoqi.
@@ -142,6 +149,9 @@ class MainWindow(QWidget):
 		self.thread_revisa = Revisa_Signos(self.sema, 2, 28.00, 'http://127.0.0.1:3000')
 		self.thread_revisa.start()
 		
+		self.cabezaX = 0
+		self.cabezaY = 0
+		
 		try:
 			self._ttsProxy = ALProxy("ALTextToSpeech", IP, PORT)
 			self._postureProxy = ALProxy("ALRobotPosture", IP, PORT)
@@ -149,6 +159,7 @@ class MainWindow(QWidget):
 			self._memoryProxy = ALProxy("ALMemory", IP, PORT)
 			self._awarenessProxy = ALProxy('ALBasicAwareness', IP, PORT)
 			self._memoryProxy = ALProxy("ALMemory", IP, PORT)
+			self._motionProxy = ALProxy("ALMotion", IP, PORT)
 
 			self._initRobot()
 			self.QRHandler = QRCodeHandler("QRCodeHandler")
@@ -161,9 +172,8 @@ class MainWindow(QWidget):
 			self._memoryProxy = None
 			self._awarenessProxy = None
 			self._memoryProxy = None
+			self._memoryProxy = None
 			logging.warning("No se pudo conectar al robot")
-
-		
 
 
 	def _initUI(self):
@@ -175,9 +185,9 @@ class MainWindow(QWidget):
 		btn1.move(330, 310)
 		btn1.clicked.connect(self.button1Clicked)
 
-		btn2 = QPushButton("Derecha", self)
-		btn2.move(0, 0)
-		btn2.clicked.connect(self.button2Clicked)
+		btnDer = QPushButton("Derecha", self)
+		btnDer.move(0, 0)
+		btnDer.clicked.connect(self.buttonDerClicked)
 
 		self.edit = QTextEdit(self)
 		self.edit.setPlainText("Hola Mundo")
@@ -208,6 +218,10 @@ class MainWindow(QWidget):
 		if self._awarenessProxy != None:
 			self._awarenessProxy.stopAwareness()
 			# ponerla tiesa
+		if self._motionProxy != None:
+			self._motionProxy.setStiffnesses("Head", 1)
+			self._motionProxy.setAngles("HeadYaw", 0, 0.5)
+			self._motionProxy.setAngles("HeadPitch", 0.0, 0.5)
 
 
 	def button1Clicked(self):
@@ -222,8 +236,19 @@ class MainWindow(QWidget):
 		self.alert.insert_alert(1, s)
 
 
-	def button2Clicked(self):
-		sender = self.sender
+	def buttonDerClicked(self):
+		moverCabeza(self.cabezaX, 0.01, -1, 1)
+		
+	
+	def moverCabeza(self, var, cambio, min, max):
+		var += cambio
+		if var < min:
+			var = min
+		elif var > max:
+			var = max
+		if self._motionProxy != None:
+			self._motionProxy.setAngles("HeadYaw", self.cabezaX, 0.6)
+			self._motionProxy.setAngles("HeadPitch", self.cabezaY, 0.6)
 
 
 	def __del__(self):
